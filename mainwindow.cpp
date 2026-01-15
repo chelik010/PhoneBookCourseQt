@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
+// TASK3: PostgreSQL storage enabled
 #include <QCoreApplication>
 #include <QTableWidgetItem>
 #include <QString>
@@ -286,7 +286,11 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , m_dataFile(QCoreApplication::applicationDirPath() + "/contacts.txt")
 {
+    // TASK2: File storage only (DB disabled)
+
     ui->setupUi(this);
+    m_useDb = false;
+
 
     // --- Пытаемся включить DB-режим ---
     qDebug() << "SQL drivers:" << QSqlDatabase::drivers();
