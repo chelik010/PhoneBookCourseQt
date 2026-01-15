@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
+// TASK3: PostgreSQL storage enabled
 #include <QCoreApplication>
 #include <QTableWidgetItem>
 #include <QString>
