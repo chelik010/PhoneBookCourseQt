@@ -15,34 +15,32 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools Sql
 set(TS_FILES PhoneBook_ru_RU.ts)
 
 set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
-        ${TS_FILES}
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h
+    mainwindow.ui
+    ${TS_FILES}
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(PhoneBook
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+
         Contact.cpp
         ContactBook.cpp
         PhoneNumber.cpp
         Validator.cpp
+
         Contact.h
         ContactBook.h
         Date.h
         PhoneNumber.h
         Validator.h
+
         databasemanager.h
         databasemanager.cpp
-
     )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET PhoneBook APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 
     qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 else()
@@ -50,8 +48,6 @@ else()
         add_library(PhoneBook SHARED
             ${PROJECT_SOURCES}
         )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
         add_executable(PhoneBook
             ${PROJECT_SOURCES}
@@ -67,13 +63,10 @@ target_link_libraries(PhoneBook
         Qt${QT_VERSION_MAJOR}::Sql
 )
 
-
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
 if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.PhoneBook)
+    set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.PhoneBook)
 endif()
+
 set_target_properties(PhoneBook PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
@@ -92,22 +85,17 @@ install(TARGETS PhoneBook
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(PhoneBook)
 endif()
-# ----------------------------
-# Тестовый консольный проект
-# ----------------------------
-# add_executable(PhoneBookTests
-#     tests.cpp
-#     Contact.cpp
-#     ContactBook.cpp
-#     PhoneNumber.cpp
-#     Validator.cpp
-#     Contact.h
-#     ContactBook.h
-#     PhoneNumber.h
-#     Date.h
-#     Validator.h
-# )
 
-# target_link_libraries(PhoneBookTests
-#     PRIVATE Qt6::Core
-# )
+# ----------------------------
+# Task1: Console version (NO Qt)
+# ----------------------------
+add_executable(PhoneBookConsole
+    console/main_console.cpp
+    console/Contact.cpp
+    console/ContactBook.cpp
+    console/PhoneNumber.cpp
+    console/Validator.cpp
+)
+
+target_include_directories(PhoneBookConsole PRIVATE console)
+target_compile_features(PhoneBookConsole PRIVATE cxx_std_17)
