@@ -3,7 +3,7 @@
 #include <cctype>
 #include <chrono>
 
-// Преобразование UTF-8 → UTF-32 без codecvt (современный способ)
+// Преобразование UTF-8  UTF-32 без codecvt
 static std::u32string utf8_to_utf32(const std::string& s)
 {
     std::u32string result;
@@ -14,10 +14,8 @@ static std::u32string utf8_to_utf32(const std::string& s)
     {
         if (c <= 0x7F)
         {
-            // Однобайтовый символ (ASCII)
             if (bytes != 0)
             {
-                // Ошибка в последовательности
                 bytes = 0;
                 codepoint = 0;
             }
@@ -25,25 +23,21 @@ static std::u32string utf8_to_utf32(const std::string& s)
         }
         else if ((c >> 5) == 0x6)
         {
-            // Начало последовательности длиной 2
             codepoint = c & 0x1F;
             bytes = 1;
         }
         else if ((c >> 4) == 0xE)
         {
-            // Начало последовательности длиной 3
             codepoint = c & 0x0F;
             bytes = 2;
         }
         else if ((c >> 3) == 0x1E)
         {
-            // Начало последовательности длиной 4
             codepoint = c & 0x07;
             bytes = 3;
         }
         else if ((c >> 6) == 0x2)
         {
-            // Продолжение последовательности UTF-8
             codepoint = (codepoint << 6) | (c & 0x3F);
             if (--bytes == 0)
             {
@@ -53,7 +47,6 @@ static std::u32string utf8_to_utf32(const std::string& s)
         }
         else
         {
-            // Ошибочный байт
             bytes = 0;
             codepoint = 0;
         }
@@ -120,25 +113,24 @@ bool Validator::isValidName(const std::string& raw)
     if (trimmed.empty())
         return false;
 
-    // распаковываем UTF-8 → массив кодпоинтов
     std::u32string s = utf8_to_utf32(trimmed);
 
     if (s.empty())
         return false;
 
-    // 1) не должен начинаться с дефиса
+    // не должен начинаться с дефиса
     if (s.front() == U'-')
         return false;
 
-    // 2) не должен заканчиваться дефисом
+    // не должен заканчиваться дефисом
     if (s.back() == U'-')
         return false;
 
-    // 3) первый символ должен быть буквой
+    // первый символ должен быть буквой
     if (!isLetter(s.front()))
         return false;
 
-    // 4) Все символы должны быть: буквы / цифры / дефис / пробел
+    // Все символы должны быть: буквы / цифры / дефис / пробел
     for (char32_t cp : s)
     {
         if (isLetterOrDigit(cp))
@@ -147,7 +139,7 @@ bool Validator::isValidName(const std::string& raw)
         if (cp == U'-' || cp == U' ')
             continue;
 
-        return false; // запрещённый символ
+        return false;
     }
 
     return true;
@@ -157,7 +149,6 @@ bool Validator::isValidPhone(const std::string& raw)
 {
     std::string s = trim(raw);
 
-    // Разрешённые форматы:
     // +7XXXXXXXXXX
     // 8XXXXXXXXXX
     // +7(XXX)XXXXXXX
@@ -183,30 +174,25 @@ bool Validator::isValidPhone(const std::string& raw)
 
 bool Validator::isValidEmail(const std::string& raw)
 {
-    // 1. Сначала убираем пробелы по краям всей строки
     std::string s = trim(raw);
     if (s.empty())
         return false;
 
-    // 2. Ищем '@'
     auto atPos = s.find('@');
     if (atPos == std::string::npos)
         return false;
 
-    // 3. Отдельно тримим левую и правую части (все пробелы вокруг '@' удаляем)
-    std::string left  = trim(s.substr(0, atPos));       // имя пользователя
-    std::string right = trim(s.substr(atPos + 1));      // домен
+    std::string left  = trim(s.substr(0, atPos));
+    std::string right = trim(s.substr(atPos + 1));
 
     if (left.empty() || right.empty())
         return false;
 
-    // 4. Внутри имени и домена пробелов быть не должно
     if (left.find(' ') != std::string::npos)
         return false;
     if (right.find(' ') != std::string::npos)
         return false;
 
-    // 5. Проверяем по регекспам: только латинские буквы и цифры
     static const std::regex userRegex(R"(^[A-Za-z0-9]+$)");
     static const std::regex domainRegex(R"(^[A-Za-z0-9]+(\.[A-Za-z0-9]+)*$)");
 
@@ -218,7 +204,6 @@ bool Validator::isValidEmail(const std::string& raw)
     return true;
 }
 
-// более полная проверка даты, чем в Date::isValid
 bool Validator::isValidBirthDate(const Date& d)
 {
     if (d.year <= 0 || d.month < 1 || d.month > 12 || d.day < 1)
@@ -254,7 +239,6 @@ bool Validator::isValidBirthDate(const Date& d)
     int curMonth = tm->tm_mon + 1;
     int curDay   = tm->tm_mday;
 
-    // d < current date?
     if (d.year > curYear) return false;
     if (d.year == curYear && d.month > curMonth) return false;
     if (d.year == curYear && d.month == curMonth && d.day >= curDay) return false;

@@ -34,7 +34,6 @@ public:
     void addPhone(const PhoneNumber& p);
     void clearPhones();
 
-    // Для вывода в консоль
     void print(int index) const;
 
 private:

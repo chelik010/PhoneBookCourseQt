@@ -1,4 +1,5 @@
 #include "ContactBook.h"
+#include "Validator.h"
 #include <fstream>
 #include <algorithm>
 #include <iostream>
@@ -7,77 +8,76 @@
 #include <QString>
 
 
-// Формат файла (текстовый, очень простой):
-// CONTACT
-// lastName
-// firstName
-// middleName
-// address
-// yyyy-mm-dd
-// email
-// phonesCount
-// number|typeString   (повтор phonesCount раз)
+
+static std::string trimLine(std::string s) {
+    while (!s.empty() && (s.back()=='\r' || s.back()=='\n')) s.pop_back();
+    return s;
+}
 
 bool ContactBook::loadFromFile(const std::string& fileName)
 {
     m_contacts.clear();
 
-    QFile file(QString::fromStdString(fileName));
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return false;    // файл не найден → ok, просто пустой справочник
+    std::ifstream in(fileName);
+    if (!in.is_open())
+        return false;
 
-    QTextStream in(&file);
-
-    while (!in.atEnd())
+    std::string line;
+    while (std::getline(in, line))
     {
-        QString line = in.readLine().trimmed();
+        line = trimLine(line);
         if (line != "CONTACT")
             continue;
 
-        QString ln   = in.readLine();
-        QString fn   = in.readLine();
-        QString mn   = in.readLine();
-        QString addr = in.readLine();
-        QString bday = in.readLine();
-        QString mail = in.readLine();
+        std::string ln, fn, mn, addr, bday, mail;
+        if (!std::getline(in, ln)) return false;
+        if (!std::getline(in, fn)) return false;
+        if (!std::getline(in, mn)) return false;
+        if (!std::getline(in, addr)) return false;
+        if (!std::getline(in, bday)) return false;
+        if (!std::getline(in, mail)) return false;
 
-        if (ln.isNull() || fn.isNull() || mn.isNull()
-            || addr.isNull() || bday.isNull() || mail.isNull())
-        {
-            return false; // файл оборван
-        }
+        ln   = trimLine(ln);
+        fn   = trimLine(fn);
+        mn   = trimLine(mn);
+        addr = trimLine(addr);
+        bday = trimLine(bday);
+        mail = trimLine(mail);
 
-        QString phoneCountStr = in.readLine();
-        if (phoneCountStr.isNull())
-            return false;
+        std::string phoneCountStr;
+        if (!std::getline(in, phoneCountStr)) return false;
+        phoneCountStr = trimLine(phoneCountStr);
 
-        int phonesCount = phoneCountStr.toInt();
+        int phonesCount = 0;
+        try { phonesCount = std::stoi(phoneCountStr); }
+        catch (...) { return false; }
 
         Contact c(
-            ln.toStdString(),
-            fn.toStdString(),
-            mn.toStdString(),
-            addr.toStdString(),
-            Date::fromString(bday.toStdString()),
-            mail.toStdString()
+            ln, fn, mn, addr,
+            Date::fromString(bday),
+            mail
             );
 
         for (int i = 0; i < phonesCount; ++i)
         {
-            QString pLine = in.readLine();
-            if (pLine.isNull()) break;
+            std::string pLine;
+            if (!std::getline(in, pLine)) break;
+            pLine = trimLine(pLine);
 
-            QStringList parts = pLine.split('|');
-            if (parts.size() < 2) continue;
+            auto pos = pLine.find('|');
+            if (pos == std::string::npos) continue;
 
-            std::string number = parts[0].trimmed().toStdString();
-            std::string typeStr = parts[1].trimmed().toStdString();
+            std::string number = pLine.substr(0, pos);
+            std::string typeStr = pLine.substr(pos + 1);
+
+            number = Validator::trim(number);
+            typeStr = Validator::trim(typeStr);
 
             PhoneType pt = PhoneNumber::stringToType(typeStr);
             c.addPhone(PhoneNumber(number, pt));
         }
 
-        m_contacts.push_back(c);
+        m_contacts.push_back(std::move(c));
     }
 
     return true;
@@ -85,34 +85,28 @@ bool ContactBook::loadFromFile(const std::string& fileName)
 
 bool ContactBook::saveToFile(const std::string& fileName) const
 {
-    QFile file(QString::fromStdString(fileName));
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    std::ofstream out(fileName, std::ios::trunc);
+    if (!out.is_open())
         return false;
-
-    QTextStream out(&file);
 
     for (const auto& c : m_contacts)
     {
         out << "CONTACT\n";
-        out << QString::fromStdString(c.lastName())   << "\n";
-        out << QString::fromStdString(c.firstName())  << "\n";
-        out << QString::fromStdString(c.middleName()) << "\n";
-        out << QString::fromStdString(c.address())    << "\n";
-        out << QString::fromStdString(c.birthDate().toString()) << "\n";
-        out << QString::fromStdString(c.email())      << "\n";
+        out << c.lastName() << "\n";
+        out << c.firstName() << "\n";
+        out << c.middleName() << "\n";
+        out << c.address() << "\n";
+        out << c.birthDate().toString() << "\n";
+        out << c.email() << "\n";
 
-        const auto &phones = c.phones();
+        const auto& phones = c.phones();
         out << phones.size() << "\n";
-
-        for (const auto &ph : phones)
+        for (const auto& ph : phones)
         {
-            out << QString::fromStdString(ph.number())
-            << "|" << QString::fromStdString(
-                PhoneNumber::typeToString(ph.type())
-                ) << "\n";
+            out << ph.number() << "|"
+                << PhoneNumber::typeToString(ph.type()) << "\n";
         }
     }
-
     return true;
 }
 

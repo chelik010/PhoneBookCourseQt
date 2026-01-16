@@ -13,7 +13,6 @@ struct Date
     {
         if (year <= 0 || month < 1 || month > 12 || day < 1 || day > 31)
             return false;
-        // очень упрощённая проверка, без високосных лет
         return true;
     }
 

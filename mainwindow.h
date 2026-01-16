@@ -27,27 +27,24 @@ private:
     ContactBook m_book;
     QString     m_dataFile;
 
-    // ====== Режимы хранения ======
-    bool m_useDb = false;                 // true = PostgreSQL, false = файл
-    std::vector<int> m_contactDbIds;      // index в m_book.contacts() -> contact_id в БД
+    //  Режимы хранения
+    bool m_useDb = false;
+    std::vector<int> m_contactDbIds;
 
-    // для поиска/фильтрации
     QString m_lastFilter;
-    std::vector<std::size_t> m_rowToIndex;   // row -> index в m_book.contacts()
+    std::vector<std::size_t> m_rowToIndex;
 
-    // ====== File ======
     void loadContactsFromFile();
     void saveContactsToFile();
 
-    // ====== DB ======
-    bool ensureDbSchema();            // CREATE TABLE IF NOT EXISTS ...
-    bool loadContactsFromDb();        // SELECT + сбор ContactBook
+    bool ensureDbSchema();
+    bool loadContactsFromDb();
     bool insertContactToDb(const Contact &c);
     bool updateContactInDb(int contactId, const Contact &c);
     bool deleteContactFromDb(int contactId);
 
-    void loadContacts();              // выбирает DB/File
-    void saveContacts();              // сохраняет только для File-режима
+    void loadContacts();
+    void saveContacts();
     void refreshTable(const QString &filter = QString());
 
 private slots:
@@ -55,5 +52,5 @@ private slots:
     void on_btnEdit_clicked();
     void on_btnDelete_clicked();
     void on_btnSearch_clicked();
-    void on_btnSort_clicked();   // ← ВАЖНО, чтобы было ТОЧНО так
+    void on_btnSort_clicked();
 };
