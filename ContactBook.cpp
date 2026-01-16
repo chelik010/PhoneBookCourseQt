@@ -7,16 +7,6 @@
 #include <QString>
 
 
-// Формат файла (текстовый, очень простой):
-// CONTACT
-// lastName
-// firstName
-// middleName
-// address
-// yyyy-mm-dd
-// email
-// phonesCount
-// number|typeString   (повтор phonesCount раз)
 
 bool ContactBook::loadFromFile(const std::string& fileName)
 {

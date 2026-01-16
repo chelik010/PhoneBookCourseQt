@@ -3,7 +3,7 @@
 #include <cctype>
 #include <chrono>
 
-// Преобразование UTF-8 → UTF-32 без codecvt (современный способ)
+// Преобразование UTF-8 → UTF-32 без codecvt
 static std::u32string utf8_to_utf32(const std::string& s)
 {
     std::u32string result;
@@ -14,10 +14,8 @@ static std::u32string utf8_to_utf32(const std::string& s)
     {
         if (c <= 0x7F)
         {
-            // Однобайтовый символ (ASCII)
             if (bytes != 0)
             {
-                // Ошибка в последовательности
                 bytes = 0;
                 codepoint = 0;
             }
@@ -53,7 +51,6 @@ static std::u32string utf8_to_utf32(const std::string& s)
         }
         else
         {
-            // Ошибочный байт
             bytes = 0;
             codepoint = 0;
         }
@@ -157,7 +154,6 @@ bool Validator::isValidPhone(const std::string& raw)
 {
     std::string s = trim(raw);
 
-    // Разрешённые форматы:
     // +7XXXXXXXXXX
     // 8XXXXXXXXXX
     // +7(XXX)XXXXXXX
@@ -254,7 +250,6 @@ bool Validator::isValidBirthDate(const Date& d)
     int curMonth = tm->tm_mon + 1;
     int curDay   = tm->tm_mday;
 
-    // d < current date?
     if (d.year > curYear) return false;
     if (d.year == curYear && d.month > curMonth) return false;
     if (d.year == curYear && d.month == curMonth && d.day >= curDay) return false;
