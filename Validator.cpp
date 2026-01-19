@@ -3,7 +3,7 @@
 #include <cctype>
 #include <chrono>
 
-// Преобразование UTF-8 → UTF-32 без codecvt (современный способ)
+// Преобразование UTF-8 → UTF-32 без codecvt
 static std::u32string utf8_to_utf32(const std::string& s)
 {
     std::u32string result;
@@ -147,7 +147,7 @@ bool Validator::isValidName(const std::string& raw)
         if (cp == U'-' || cp == U' ')
             continue;
 
-        return false; // запрещённый символ
+        return false;
     }
 
     return true;

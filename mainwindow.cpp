@@ -23,7 +23,7 @@
 #include <QHBoxLayout>
 
 
-// ==================== Диалог ввода/редактирования контакта ====================
+//  Диалог ввода/редактирования контакта
 
 class ContactDialog : public QDialog
 {
@@ -40,14 +40,12 @@ public:
         m_birthDateEdit  = new QDateEdit(this);
         m_emailEdit      = new QLineEdit(this);
 
-        // ---- Телефоны ----
         m_phoneEdit    = new QLineEdit(this);
         m_phoneTypeBox = new QComboBox(this);
         m_phoneList    = new QListWidget(this);
         m_addPhoneBtn  = new QPushButton(tr("Добавить"), this);
         m_delPhoneBtn  = new QPushButton(tr("Удалить выбранный"), this);
 
-        // Настройки даты
         m_birthDateEdit->setDisplayFormat("yyyy-MM-dd");
         m_birthDateEdit->setCalendarPopup(true);
         m_birthDateEdit->setDate(QDate(2000, 1, 1));
@@ -60,7 +58,6 @@ public:
         m_phoneTypeBox->addItem("work");
         m_phoneTypeBox->addItem("other");
 
-        // UI для добавления телефона: [номер] [тип] [кнопка]
         auto *phoneRow = new QHBoxLayout;
         phoneRow->addWidget(m_phoneEdit);
         phoneRow->addWidget(m_phoneTypeBox);
@@ -74,9 +71,9 @@ public:
         form->addRow(tr("Дата рождения"), m_birthDateEdit);
         form->addRow(tr("E-mail*"),       m_emailEdit);
 
-        form->addRow(tr("Телефон*"),      phoneRow);        // добавление в список
-        form->addRow(tr("Все телефоны"),  m_phoneList);     // список телефонов
-        form->addRow(QString(),           m_delPhoneBtn);   // кнопка удаления
+        form->addRow(tr("Телефон*"),      phoneRow);
+        form->addRow(tr("Все телефоны"),  m_phoneList);
+        form->addRow(QString(),           m_delPhoneBtn);
 
         auto *buttons = new QDialogButtonBox(
             QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -99,7 +96,6 @@ public:
         setLayout(layout);
     }
 
-    // заполнение существующим контактом (для редактирования)
     void setContact(const Contact &c)
     {
         m_lastNameEdit->setText(QString::fromStdString(c.lastName()));
@@ -122,7 +118,6 @@ public:
                            QString::fromStdString(PhoneNumber::typeToString(ph.type())));
         }
 
-        // Для удобства: подставим первый телефон в поля ввода
         if (!phones.empty()) {
             m_phoneEdit->setText(QString::fromStdString(phones[0].number()));
             QString typeStr = QString::fromStdString(PhoneNumber::typeToString(phones[0].type()));
@@ -142,12 +137,10 @@ protected:
         QString adr = m_addressEdit->text().trimmed();
         QString em  = m_emailEdit->text().trimmed();
 
-        // Если пользователь набрал телефон в поле, но не нажал "Добавить" — добавим автоматически
         if (!m_phoneEdit->text().trimmed().isEmpty()) {
             addPhoneFromInputs(/*silent*/true);
         }
 
-        // Проверки по требованиям
         if (!Validator::isValidName(ln.toStdString()) ||
             !Validator::isValidName(fn.toStdString()))
         {
@@ -179,14 +172,12 @@ protected:
             return;
         }
 
-        // Главное: хотя бы один телефон
         if (m_phoneList->count() == 0) {
             QMessageBox::warning(this, tr("Ошибка"),
                                  tr("Нужно указать хотя бы один телефон."));
             return;
         }
 
-        // Собираем Contact
         m_contact = Contact(
             ln.toStdString(),
             fn.toStdString(),
@@ -196,7 +187,6 @@ protected:
             em.toStdString()
             );
 
-        // Добавляем все телефоны из списка
         for (int i = 0; i < m_phoneList->count(); ++i) {
             QListWidgetItem *it = m_phoneList->item(i);
             QString num = it->data(Qt::UserRole).toString();
@@ -227,7 +217,6 @@ private:
 
         QString pt = m_phoneTypeBox->currentText();
 
-        // Можно запретить дубликаты (номер+тип)
         for (int i = 0; i < m_phoneList->count(); ++i) {
             auto *it = m_phoneList->item(i);
             if (it->data(Qt::UserRole).toString() == ph &&
@@ -248,7 +237,6 @@ private:
 
     void addPhoneToList(const QString &number, const QString &type)
     {
-        // Текст как будет показан в списке
         auto *item = new QListWidgetItem(QString("%1: %2").arg(type, number));
         item->setData(Qt::UserRole, number);
         item->setData(Qt::UserRole + 1, type);
@@ -279,7 +267,6 @@ private:
     Contact m_contact;
 };
 
-// =========================== MainWindow ===========================
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -288,10 +275,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    // --- Пытаемся включить DB-режим ---
     qDebug() << "SQL drivers:" << QSqlDatabase::drivers();
 
-    // ВАЖНО: даём имя коннекта, чтобы не плодить default-connection
     QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL", "phonebook_conn");
     db.setHostName("127.0.0.1");
     db.setPort(5433);
@@ -313,8 +298,8 @@ MainWindow::MainWindow(QWidget *parent)
         }
     }
 
-    loadContacts();   // выберет DB или File
-    refreshTable();   // без фильтра
+    loadContacts();
+    refreshTable();
 }
 
 MainWindow::~MainWindow()
@@ -322,11 +307,10 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-// ====== File ======
 void MainWindow::loadContactsFromFile()
 {
     m_book.loadFromFile(m_dataFile.toStdString());
-    m_contactDbIds.clear(); // в file-режиме id нет
+    m_contactDbIds.clear();
 }
 
 void MainWindow::saveContactsToFile()
@@ -340,7 +324,6 @@ void MainWindow::saveContactsToFile()
     }
 }
 
-// ====== DB helpers ======
 static QSqlDatabase dbConn()
 {
     return QSqlDatabase::database("phonebook_conn");
@@ -389,7 +372,6 @@ bool MainWindow::importFromFileToDbIfEmpty()
     if (!db.isOpen())
         return false;
 
-    // 1) Проверяем: пустая ли таблица contacts
     QSqlQuery q(db);
     if (!q.exec("SELECT COUNT(*) FROM contacts;") || !q.next()) {
         qDebug() << "count contacts failed:" << q.lastError().text();
@@ -402,7 +384,6 @@ bool MainWindow::importFromFileToDbIfEmpty()
         return true;
     }
 
-    // 2) Читаем контакты из файла (как в задаче 2)
     ContactBook tmp;
     tmp.loadFromFile(m_dataFile.toStdString());
     const auto &list = tmp.contacts();
@@ -414,7 +395,6 @@ bool MainWindow::importFromFileToDbIfEmpty()
 
     qDebug() << "Importing" << (int)list.size() << "contacts from file to DB...";
 
-    // 3) Импортируем по одному (БЕЗ общей транзакции!)
     for (const auto &c : list) {
         if (!insertContactToDb(c)) {
             qDebug() << "Import failed on email:" << QString::fromStdString(c.email());
@@ -431,7 +411,6 @@ bool MainWindow::loadContactsFromDb()
     QSqlDatabase db = dbConn();
     if (!db.isOpen()) return false;
 
-    // очистим текущие данные (проще всего — пересоздать ContactBook)
     m_book = ContactBook{};
     m_contactDbIds.clear();
 
@@ -578,7 +557,6 @@ bool MainWindow::updateContactInDb(int contactId, const Contact &c)
         return false;
     }
 
-    // Переписываем телефоны целиком (проще и надёжнее)
     QSqlQuery qdel(db);
     qdel.prepare("DELETE FROM phones WHERE contact_id=:id;");
     qdel.bindValue(":id", contactId);
@@ -628,12 +606,10 @@ bool MainWindow::deleteContactFromDb(int contactId)
     return true;
 }
 
-// ====== общий выбор режима ======
 void MainWindow::loadContacts()
 {
     if (m_useDb) {
         if (!loadContactsFromDb()) {
-            // если что-то пошло не так — откатимся на файл
             m_useDb = false;
             loadContactsFromFile();
         }
@@ -644,14 +620,11 @@ void MainWindow::loadContacts()
 
 void MainWindow::saveContacts()
 {
-    // В DB-режиме файл не трогаем (по требованию задачи 3 “не удаляя хранение в файл”:
-    // это значит, что file-режим остаётся и работает, но DB-режим не обязан писать в файл.)
     if (!m_useDb) {
         saveContactsToFile();
     }
 }
 
-// Перерисовка таблицы с учётом текущего фильтра
 void MainWindow::refreshTable(const QString &filter)
 {
     const auto &list = m_book.contacts();
@@ -695,7 +668,6 @@ void MainWindow::refreshTable(const QString &filter)
         {
             auto *item = new QTableWidgetItem(QString::fromStdString(text));
 
-            // В DB-режиме на первой колонке храним contact_id в UserRole
             if (storeId && m_useDb && idx < m_contactDbIds.size()) {
                 item->setData(Qt::UserRole, m_contactDbIds[idx]);
             }
@@ -703,7 +675,7 @@ void MainWindow::refreshTable(const QString &filter)
             ui->tableContacts->setItem(row, col, item);
         };
 
-        setCell(0, c.lastName(), true); // id прячем тут
+        setCell(0, c.lastName(), true);
         setCell(1, c.firstName());
         setCell(2, c.middleName());
         setCell(3, c.address());
@@ -726,7 +698,7 @@ void MainWindow::refreshTable(const QString &filter)
     ui->tableContacts->resizeColumnsToContents();
 }
 
-// ===================== СЛОТЫ КНОПОК =====================
+//  СЛОТЫ КНОПОК
 
 void MainWindow::on_btnAdd_clicked()
 {
@@ -741,7 +713,7 @@ void MainWindow::on_btnAdd_clicked()
                                      tr("Не удалось добавить контакт в БД."));
                 return;
             }
-            loadContacts(); // перечитать из БД, чтобы обновить id
+            loadContacts();
             refreshTable(m_lastFilter);
             return;
         }
@@ -777,7 +749,6 @@ void MainWindow::on_btnEdit_clicked()
         Contact c = dlg.contact();
 
         if (m_useDb) {
-            // достаём id из таблицы (UserRole хранится в колонке 0)
             QTableWidgetItem *first = ui->tableContacts->item(row, 0);
             int contactId = first ? first->data(Qt::UserRole).toInt() : -1;
             if (contactId <= 0) {
@@ -849,7 +820,7 @@ void MainWindow::on_btnDelete_clicked()
     refreshTable(m_lastFilter);
 }
 
-// ===== ПОИСК =====
+//  ПОИСК
 void MainWindow::on_btnSearch_clicked()
 {
     bool ok = false;
@@ -870,11 +841,9 @@ void MainWindow::on_btnSearch_clicked()
     refreshTable(text);
 }
 
-// ===== СОРТИРОВКА =====
+//  СОРТИРОВКА
 void MainWindow::on_btnSort_clicked()
 {
-    // В DB-режиме сортировку ты сейчас делаешь в памяти через ContactBook (как и раньше)
-    // Это ок для курсовой. Если захочешь — потом перенесём ORDER BY в SQL.
 
     QStringList fields;
     fields << tr("Фамилия") << tr("Дата рождения");
