@@ -11,7 +11,6 @@ DatabaseManager& DatabaseManager::instance() {
 }
 
 DatabaseManager::DatabaseManager() {
-    // Важно: addDatabase после того, как уже есть QApplication (у тебя это ок сейчас)
     m_db = QSqlDatabase::addDatabase("QPSQL", "phonebook_conn");
     m_db.setHostName("127.0.0.1");
     m_db.setPort(5433);
