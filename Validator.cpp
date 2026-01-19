@@ -3,7 +3,7 @@
 #include <cctype>
 #include <chrono>
 
-// Преобразование UTF-8 → UTF-32 без codecvt (современный способ)
+// Преобразование UTF-8 → UTF-32 без codecvt
 static std::u32string utf8_to_utf32(const std::string& s)
 {
     std::u32string result;
@@ -147,7 +147,7 @@ bool Validator::isValidName(const std::string& raw)
         if (cp == U'-' || cp == U' ')
             continue;
 
-        return false; // запрещённый символ
+        return false;
     }
 
     return true;
@@ -157,7 +157,6 @@ bool Validator::isValidPhone(const std::string& raw)
 {
     std::string s = trim(raw);
 
-    // Разрешённые форматы:
     // +7XXXXXXXXXX
     // 8XXXXXXXXXX
     // +7(XXX)XXXXXXX
@@ -183,30 +182,25 @@ bool Validator::isValidPhone(const std::string& raw)
 
 bool Validator::isValidEmail(const std::string& raw)
 {
-    // 1. Сначала убираем пробелы по краям всей строки
     std::string s = trim(raw);
     if (s.empty())
         return false;
 
-    // 2. Ищем '@'
     auto atPos = s.find('@');
     if (atPos == std::string::npos)
         return false;
 
-    // 3. Отдельно тримим левую и правую части (все пробелы вокруг '@' удаляем)
-    std::string left  = trim(s.substr(0, atPos));       // имя пользователя
-    std::string right = trim(s.substr(atPos + 1));      // домен
+    std::string left  = trim(s.substr(0, atPos));
+    std::string right = trim(s.substr(atPos + 1));
 
     if (left.empty() || right.empty())
         return false;
 
-    // 4. Внутри имени и домена пробелов быть не должно
     if (left.find(' ') != std::string::npos)
         return false;
     if (right.find(' ') != std::string::npos)
         return false;
 
-    // 5. Проверяем по регекспам: только латинские буквы и цифры
     static const std::regex userRegex(R"(^[A-Za-z0-9]+$)");
     static const std::regex domainRegex(R"(^[A-Za-z0-9]+(\.[A-Za-z0-9]+)*$)");
 
@@ -218,7 +212,6 @@ bool Validator::isValidEmail(const std::string& raw)
     return true;
 }
 
-// более полная проверка даты, чем в Date::isValid
 bool Validator::isValidBirthDate(const Date& d)
 {
     if (d.year <= 0 || d.month < 1 || d.month > 12 || d.day < 1)
@@ -254,7 +247,6 @@ bool Validator::isValidBirthDate(const Date& d)
     int curMonth = tm->tm_mon + 1;
     int curDay   = tm->tm_mday;
 
-    // d < current date?
     if (d.year > curYear) return false;
     if (d.year == curYear && d.month > curMonth) return false;
     if (d.year == curYear && d.month == curMonth && d.day >= curDay) return false;
